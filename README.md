@@ -26,22 +26,18 @@ This project provides a Google Forms-based system for employees to request purch
 ### 2. Link to Google Sheets
 1. Click on the **Responses** tab in the form and create a linked Google Sheet.
 
-### 3. Add the Script
+### 3. Add the Scripts
 1. In the Google Sheet, go to **Extensions > Apps Script**.
-2. Copy and paste the script from this repository (`purchase_request_script.js`) into the Apps Script editor.
+2. Copy and paste the script from this repository (`Code.gs` and `SetupForm.html`) into the Apps Script editor.
 3. Save and close the editor.
+4. Reload the Google Sheet to make sure the script updates are recognized.
 
-### 4. Set Up Triggers
-1. In **Apps Script**, click on the **Triggers** icon (clock icon).
-2. Set up a trigger for `onFormSubmit` to fire **On form submit**.
-3. Set up a time-driven trigger for `sendApprovalNotification` to run every 15 minutes or hour.
-
-### 5. Use the Setup Form
-1. In the linked Google Sheet, use the **Setup Form** sidebar to configure email settings for notifications.
-2. Go to **Extensions > Apps Script > Run setup()**. This will open a sidebar in the Google Sheet.
+### 4. Run the Setup Script
+1. In the linked Google Sheet, go to the newly added **Setup Menu** in the toolbar.
+2. Select **Run Setup**. This will open a sidebar in the Google Sheet.
 3. Fill in the required supervisor email address, configure CC preferences, enable SMS notifications if needed, and optionally add a third-party email for additional notification.
 
-### 6. Test the System
+### 5. Test the System
 1. Submit a test request via the Google Form.
 2. Verify that the supervisor receives a notification with a summary and link to the sheet.
 3. Approve or deny the request in the **Approval Status** column of the sheet and confirm that the employee is notified via email.
@@ -49,7 +45,7 @@ This project provides a Google Forms-based system for employees to request purch
 ## Script Overview
 
 ### `setup()`
-Runs the setup form in the sidebar, allowing configuration of email settings for the supervisor, SMS notifications, CC preferences, and optional third-party notifications.
+Runs the setup form in the sidebar, allowing configuration of email settings for the supervisor, SMS notifications, CC preferences, and optional third-party notifications. Also handles the creation of necessary triggers automatically.
 
 ### `onFormSubmit(e)`
 Triggered when a form submission is received. Sends a notification to the supervisor with the details of the request.
@@ -62,5 +58,4 @@ Handles storing configuration options set by the setup form, including superviso
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. In summary, you are free to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software, provided you include the original copyright notice. The software is provided "as is", without warranty of any kind, and the creators are not liable for any issues that arise from using the software.
