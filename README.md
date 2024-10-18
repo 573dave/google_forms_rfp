@@ -34,10 +34,10 @@ This project provides a Google Forms-based system for employees to request purch
 
 ### 3. Add the Scripts
 1. In the Google Sheet, go to **Extensions > Apps Script**.
-2. In the Apps Script editor, copy and paste the contents of [Code.gs](https://raw.githubusercontent.com/573dave/google_forms_rfp/refs/heads/main/Code.gs) from this repository, replacing the empty "myFunction".
+2. In the Apps Script editor, copy and paste the contents of [Code.gs](https://raw.githubusercontent.com/573dave/google_forms_rfp/refs/heads/main/Code.gs){:target="_blank"} from this repository, replacing the empty "myFunction".
 3. Create another new file for the HTML form:
    - Click on the **+** icon again and select **HTML**.
-   - Name it `SetupForm` and copy and paste the contents of [SetupForm.html](https://raw.githubusercontent.com/573dave/google_forms_rfp/refs/heads/main/SetupForm.html) from this repository into the editor.
+   - Name it `SetupForm` and copy and paste the contents of [SetupForm.html](https://raw.githubusercontent.com/573dave/google_forms_rfp/refs/heads/main/SetupForm.html){:target="_blank"} from this repository into the editor.
 4. Save both files and close the editor.
 5. Reload the Google Sheet to ensure the script updates are recognized.
 
