@@ -15,8 +15,7 @@ This project provides a Google Forms-based system for employees to request purch
 
 ### 1. Create the Google Form
 1. Go to [Google Forms](https://forms.google.com) and create a new form.
-2. Add the following fields:
-   - **Email Address** (Automatically captured by sign-in)
+2. Add the following fields: **Note:** The current code will only work if all of these fields are present and in the specified order, with no additional fields. If you need to add or modify fields, you will need to adjust the code accordingly.
    - **Item to Purchase** (Short answer)
    - **Estimated Cost** (Short answer with number validation)
    - **Link to Item** (Short answer for a URL)
@@ -59,3 +58,10 @@ Handles storing configuration options set by the setup form, including superviso
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. In summary, you are free to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software, provided you include the original copyright notice. The software is provided "as is", without warranty of any kind, and the creators are not liable for any issues that arise from using the software.
+
+### What the MIT License Means
+The MIT License is a permissive free software license. In simple terms, it means:
+- You are free to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software.
+- You must include the original copyright notice in any copies or substantial portions of the software.
+- The software is provided "as is", without warranty of any kind. The creators are not liable for any issues that arise from using the software.
+
