@@ -11,6 +11,7 @@ This project provides a Google Forms-based system for employees to request purch
 - **Configurable Notification Preferences**: Options to enable CC for supervisors or employees, as well as notifications for third-party stakeholders (e.g., managers or secretaries).
 - **SMS Notification (Optional)**: Supervisors can also receive SMS notifications if their phone email-to-text gateway is provided.
 - **Automatic Permission Handling**: The script automatically requests necessary permissions when the sheet is opened or edited.
+- **Custom Menu**: A custom menu is added to the Google Sheet for easy access to setup and authorization functions.
 
 ## Setup Instructions
 
@@ -23,7 +24,7 @@ This project provides a Google Forms-based system for employees to request purch
    - **Optional Photo Upload** (File upload field, requires sign-in)
    - **Reason for Purchase** (Paragraph for detailed explanation)
 
-**Note:** The current code will only work if all of these fields are present and in the specified order, with no additional fields. If you need to add or modify fields, you will need to adjust the code accordingly.
+**Note:** The current code expects these fields to be present and in this specific order. If you need to add or modify fields, you will need to adjust the `COLUMNS` constant in the script accordingly.
 
 ### 2. Link to Google Sheets
 1. Click on the **Responses** tab in the form and create a linked Google Sheet.
@@ -50,32 +51,64 @@ This project provides a Google Forms-based system for employees to request purch
 4. Click "Save" to store your settings.
 
 ### 5. Grant Permissions
-1. The first time you open the sheet or make an edit, you'll be prompted to grant the necessary permissions for the script to function.
+1. Click on `[[Menu]]` and select **Authorize** to grant the necessary permissions for the script to function.
 2. Follow the prompts to review and grant the required permissions.
-
 
 ## Script Overview
 
 ### `onOpen()`
-Sets up the custom menu and attempts to obtain necessary permissions when the sheet is opened.
+Sets up the custom menu when the sheet is opened.
 
 ### `setup()`
 Runs the setup form in the sidebar, allowing configuration of email settings for the supervisor, SMS notifications, CC preferences, and optional third-party notifications.
 
+### `onSetupFormLoaded()`
+Performs authorization tests and creates necessary triggers when the setup form is loaded.
+
+### `authorizationTest()`
+Tests various Google services to ensure proper authorization.
+
+### `authorizeScript()`
+Manually triggers the authorization process.
+
+### `addApprovalColumn()`
+Adds an "Approval Status" column to the sheet if it doesn't exist.
+
+### `createTriggers()`
+Creates necessary triggers for form submission and edit events.
+
 ### `onFormSubmit(e)`
 Triggered when a form submission is received. Sends a notification to the supervisor with the details of the request.
 
-### `onEdit(e)`
+### `onEditHandler(e)`
 Triggered when an edit is made to the sheet. Checks if the approval status has changed and sends notifications accordingly.
 
-### `sendRequestNotification(e)`
-Handles sending notifications for new purchase requests, including email and optional SMS.
+### `sendNotification(data, isNewRequest, sheetUrl)`
+Handles sending notifications for new purchase requests or status updates, including email and optional SMS.
 
-### `generateEmailHTML()`
+### `generateEmailHTML(data, isRequest, sheetUrl, imageTag)`
 Generates the HTML content for email notifications, including embedded images when available.
 
-### `saveSetupData()`
-Handles storing configuration options set by the setup form, including supervisor email, SMS notification setup, CC preferences, and third-party email settings.
+### `sendSmsNotification(requestedItem, sheetUrl, phoneEmail)`
+Sends SMS notifications for new purchase requests.
+
+### `prepareEmailOptions(data, properties, isNewRequest, sheetUrl)`
+Prepares email options including recipients, subject, and content.
+
+### `getRowData(sheet, row)`
+Retrieves data from a specific row in the sheet.
+
+### `generateImageTag(photoUpload)`
+Generates an HTML image tag or file link for the uploaded photo.
+
+### `saveSetupData(formData)`
+Handles storing configuration options set by the setup form.
+
+### `getSetupData()`
+Retrieves the current setup data from script properties.
+
+### `validateSetupData(data)`
+Validates the setup data before saving.
 
 ## License
 
