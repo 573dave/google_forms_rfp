@@ -4,7 +4,7 @@ This project provides a Google Forms-based system for employees to request purch
 
 ## Features
 
-- **Google Form Integration**: Employees can easily request purchases using a Google Form.
+- **Google Form Integration**: Employees can easily request purchases using a Google Form, including an optional photo upload.
 - **Automated Notifications**: Boss receives an email with a summary of the request and a link to the Google Sheet for approval.
 - **Approval Process**: Once the boss approves or denies the request in the sheet, employees are notified automatically.
 - **HTML Email Summaries**: Requests and approvals are sent as HTML emails for easy reading.
@@ -14,14 +14,16 @@ This project provides a Google Forms-based system for employees to request purch
 ### 1. Create the Google Form
 1. Go to [Google Forms](https://forms.google.com) and create a new form.
 2. Add the following fields:
-   - **Email Address** (Email question type)
+   - **Email Address** (Automatically captured by sign-in)
    - **Item to Purchase** (Short answer)
-   - **Reason for Purchase** (Paragraph)
-   - **Estimated Cost** (Short answer, number validation)
-   - **Approval Status** (Multiple choice with options: "Pending", "Approved", "Denied")
+   - **Estimated Cost** (Short answer with number validation)
+   - **Link to Item** (Short answer for a URL)
+   - **Optional Photo Upload** (File upload field)
+   - **Reason for Purchase** (Paragraph for detailed explanation)
+   - **Approval Status** (Multiple choice: "Pending", "Approved", "Denied")
 
 ### 2. Link to Google Sheets
-1. Click on the **Responses** tab in the form, and click the green Sheets icon to create a linked response sheet.
+1. Click on the **Responses** tab in the form and create a linked Google Sheet.
 
 ### 3. Add the Script
 1. In the Google Sheet, go to **Extensions > Apps Script**.
@@ -29,9 +31,9 @@ This project provides a Google Forms-based system for employees to request purch
 3. Save and close the editor.
 
 ### 4. Set Up Triggers
-1. In the Apps Script editor, click on the **Triggers** icon (clock icon).
+1. In **Apps Script**, click on the **Triggers** icon (clock icon).
 2. Set up a trigger for `onFormSubmit` to fire **On form submit**.
-3. Set up a time-driven trigger for `sendApprovalNotification` to run at regular intervals.
+3. Set up a time-driven trigger for `sendApprovalNotification` to run every 15 minutes or hour.
 
 ### 5. Test the System
 1. Submit a test request via the Google Form.
