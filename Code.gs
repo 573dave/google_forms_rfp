@@ -1,17 +1,61 @@
+// Constants
 const APPROVAL_STATUSES = ["Pending", "Approved", "Denied"];
 const COLUMNS = {APPROVAL: 1, EMAIL: 3, ITEM: 4, COST: 5, LINK: 6, PHOTO: 7, REASON: 8};
 
 function onOpen() {
-  try {
-    authorizationTest();
-    SpreadsheetApp.getUi().createMenu('[[Menu]]').addItem('Settings', 'setup').addToUi();
-  } catch (e) { Logger.log('Error in onOpen: ' + e.toString()); }
+  SpreadsheetApp.getUi()
+    .createMenu('[[Menu]]')
+    .addItem('Settings', 'setup')
+    .addItem('Authorize', 'authorizeScript')
+    .addToUi();
 }
 
 function setup() {
-  const template = HtmlService.createTemplateFromFile('SetupForm');
-  template.data = getSetupData() || {};
-  SpreadsheetApp.getUi().showSidebar(template.evaluate().setTitle('Setup'));
+  try {
+    const template = HtmlService.createTemplateFromFile('SetupForm');
+    template.data = getSetupData(); 
+    const html = template.evaluate();
+    console.log('HTML content:', html.getContent()); // Log the HTML content
+    SpreadsheetApp.getUi().showSidebar(html.setTitle('Setup'));
+  } catch (e) {
+    console.error('Error in setup:', e);
+    if (e.stack) {
+      console.error('Stack trace:', e.stack);
+    }
+    SpreadsheetApp.getUi().alert('An error occurred while loading the Setup form. Please check the logs for more details.');
+  }
+}
+
+function onSetupFormLoaded() {
+  try {
+    authorizationTest();
+    createTriggers();
+    return { success: true };
+  } catch (e) {
+    Logger.log('Error in onSetupFormLoaded: ' + e.toString());
+    return { success: false, error: e.toString() };
+  }
+}
+
+function authorizationTest() {
+  SpreadsheetApp.getActiveSpreadsheet().getSheets();
+  GmailApp.getInboxUnreadCount();
+  DriveApp.getFiles();
+  Drive.Files.list({pageSize: 1});
+}
+
+function authorizeScript() {
+  try {
+    authorizationTest();
+    SpreadsheetApp.getUi().alert('Script authorized successfully!');
+  } catch (e) {
+    Logger.log('Authorization failed: ' + e.toString());
+    showReauthorizationPrompt();
+  }
+}
+
+function showReauthorizationPrompt() {
+  SpreadsheetApp.getUi().alert('Authorization Error', 'Please reauthorize the script using the Authorize function in the [[Menu]].', SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 function addApprovalColumn() {
@@ -26,85 +70,74 @@ function addApprovalColumn() {
 }
 
 function createTriggers() {
-  const triggers = {onFormSubmit: ScriptApp.EventType.ON_FORM_SUBMIT, onEdit: ScriptApp.EventType.ON_EDIT};
-  Object.entries(triggers).forEach(([funcName, eventType]) => {
-    if (!ScriptApp.getProjectTriggers().some(trigger => trigger.getHandlerFunction() === funcName)) {
-      ScriptApp.newTrigger(funcName).forSpreadsheet(SpreadsheetApp.getActiveSpreadsheet()).on(eventType).create();
-    }
-  });
-}
-
-function sendRequestNotification(e) {
-  try {
-    const sheet = e.range.getSheet(), row = e.range.getRow(), data = getRowData(sheet, row);
-    const properties = PropertiesService.getScriptProperties().getProperties();
-    const shortUrl = shortenUrl(SpreadsheetApp.getActiveSpreadsheet().getUrl());
-    const emailOptions = prepareEmailOptions(data, properties, true, shortUrl);
-    GmailApp.sendEmail(emailOptions.to, emailOptions.subject, '', emailOptions);
-    if (properties.ENABLE_SMS === 'true' && properties.SUPERVISOR_PHONE_EMAIL) {
-      sendSmsNotification(data.requestedItem, shortUrl, properties.SUPERVISOR_PHONE_EMAIL);
-    }
-  } catch (error) { Logger.log('Error sending request notification: ' + error.message); }
+  const properties = PropertiesService.getScriptProperties();
+  if (properties.getProperty('TRIGGERS_CREATED') !== 'true') {
+    const triggers = [
+      { funcName: 'onFormSubmit', eventType: ScriptApp.EventType.ON_FORM_SUBMIT },
+      { funcName: 'onEditHandler', eventType: ScriptApp.EventType.ON_EDIT }
+    ];
+    triggers.forEach(({ funcName, eventType }) => {
+      if (!ScriptApp.getProjectTriggers().some(trigger => trigger.getHandlerFunction() === funcName)) {
+        ScriptApp.newTrigger(funcName)
+          .forSpreadsheet(SpreadsheetApp.getActiveSpreadsheet())
+          .on(eventType)
+          .create();
+      }
+    });
+    properties.setProperty('TRIGGERS_CREATED', 'true');
+  }
 }
 
 function onFormSubmit(e) {
   try {
     authorizationTest();
-    e.range.getSheet().getRange(e.range.getRow(), COLUMNS.APPROVAL).setValue("Pending");
-    sendRequestNotification(e);
-  } catch (error) { Logger.log('Error in onFormSubmit: ' + error.message); }
+    const sheet = e.range.getSheet();
+    const row = e.range.getRow();
+    sheet.getRange(row, COLUMNS.APPROVAL).setValue("Pending");
+    const data = getRowData(sheet, row);
+    const sheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
+    sendNotification(data, true, sheetUrl);
+  } catch (error) { 
+    Logger.log('Error in onFormSubmit: ' + error.message); 
+  }
 }
 
-function onEdit(e) {
+function onEditHandler(e) {
   try {
     authorizationTest();
-    const sheet = e.range.getSheet(), row = e.range.getRow(), column = e.range.getColumn();
+    const sheet = e.range.getSheet();
+    const row = e.range.getRow();
+    const column = e.range.getColumn();
     if (sheet.getRange(1, 1).getValue() === 'Approval Status' && column === COLUMNS.APPROVAL && row > 1) {
       const approvalStatus = e.range.getValue();
       if (APPROVAL_STATUSES.includes(approvalStatus)) {
         const data = getRowData(sheet, row);
         data.approvalStatus = approvalStatus;
-        const properties = PropertiesService.getScriptProperties().getProperties();
-        GmailApp.sendEmail(data.employeeEmail, `[[Form]] ${data.requestedItem} - ${approvalStatus}`, '', 
-                           prepareEmailOptions(data, properties, false));
+        sendNotification(data, false);
       }
     }
-  } catch (error) { Logger.log('Error in onEdit: ' + error.message); }
-}
-
-function saveSetupData(supervisorEmail, enableSMS, supervisorPhoneEmail, ccSupervisor, ccEmployee, enableThirdPartyEmail, thirdPartyEmail) {
-  const errors = [];
-  if (!isValidEmail(supervisorEmail)) errors.push('Invalid Supervisor Email.');
-  if (enableSMS && !isValidEmail(supervisorPhoneEmail)) errors.push('Invalid Supervisor Phone Email.');
-  if (enableThirdPartyEmail && !isValidEmail(thirdPartyEmail)) errors.push('Invalid Third-Party Email.');
-  if (errors.length > 0) throw new Error(errors.join('\n'));
-
-  const data = {supervisorEmail, enableSMS: enableSMS.toString(), supervisorPhoneEmail, ccSupervisor: ccSupervisor.toString(), 
-                ccEmployee: ccEmployee.toString(), enableThirdPartyEmail: enableThirdPartyEmail.toString(), thirdPartyEmail};
-  CacheService.getUserCache().put('setupData', JSON.stringify(data), 600);
-
-  const properties = PropertiesService.getScriptProperties();
-  properties.setProperties({
-    'SUPERVISOR_EMAIL': supervisorEmail,
-    'ENABLE_SMS': enableSMS.toString(),
-    'SUPERVISOR_PHONE_EMAIL': enableSMS ? supervisorPhoneEmail : '',
-    'CC_SUPERVISOR': ccSupervisor.toString(),
-    'CC_EMPLOYEE': ccEmployee.toString(),
-    'ENABLE_THIRD_PARTY_EMAIL': enableThirdPartyEmail.toString(),
-    'THIRD_PARTY_EMAIL': enableThirdPartyEmail ? thirdPartyEmail : '',
-  });
-
-  if (properties.getProperty('SETUP_COMPLETED') !== 'true') {
-    addApprovalColumn();
-    createTriggers();
-    properties.setProperty('SETUP_COMPLETED', 'true');
+  } catch (error) {
+    Logger.log('Error in onEditHandler: ' + error.message);
+    showReauthorizationPrompt();
   }
 }
 
-function generateEmailHTML(data, isRequest, shortUrl = '') {
-  const { employeeEmail, requestedItem, estimatedCost, itemLink, purchaseReason, approvalStatus, imageTag } = data;
+function sendNotification(data, isNewRequest, sheetUrl) {
+  const properties = PropertiesService.getScriptProperties().getProperties();
+  const emailOptions = prepareEmailOptions(data, properties, isNewRequest, sheetUrl);
+  GmailApp.sendEmail(emailOptions.to, emailOptions.subject, '', emailOptions);
+  
+  if (isNewRequest && properties.ENABLE_SMS === 'true' && properties.SUPERVISOR_PHONE_EMAIL) {
+    sendSmsNotification(data.item, sheetUrl, properties.SUPERVISOR_PHONE_EMAIL);
+  }
+}
+
+
+
+function generateEmailHTML(data, isRequest, sheetUrl, imageTag = '') {
+  const { email, item, cost, link, reason, approvalStatus } = data;
   const title = isRequest ? 'New Purchase Request' : `Your Purchase Request Has Been ${approvalStatus}`;
-  const footer = isRequest ? `<a href="${shortUrl}" style="color:#1a73e8;">Click here to open the Purchase Request spreadsheet.</a>` : '';
+  const footer = isRequest ? `<a href="${sheetUrl}" style="color:#1a73e8;">Click here to open the Purchase Request spreadsheet.</a>` : '';
   return `
     <!DOCTYPE html>
     <html>
@@ -125,13 +158,13 @@ function generateEmailHTML(data, isRequest, shortUrl = '') {
         <div class="email-header"><h2>${title}</h2></div>
         <div class="email-content">
           <table>
-            ${isRequest ? `<tr><th>Requestor:</th><td>${employeeEmail}</td></tr>` : ''}
-            <tr><th>Item:</th><td>${requestedItem}</td></tr>
-            <tr><th>Estimated Cost:</th><td>$${estimatedCost}</td></tr>
-            <tr><th>Item Link:</th><td><a href="${itemLink}" style="color:#1a73e8;">${itemLink}</a></td></tr>
-            <tr><th>Reason for Purchase:</th><td>${purchaseReason}</td></tr>
+            ${isRequest ? `<tr><th>Requestor:</th><td>${email}</td></tr>` : ''}
+            <tr><th>Item:</th><td>${item || 'Not specified'}</td></tr>
+            <tr><th>Estimated Cost:</th><td>${cost ? `$${cost}` : 'Not specified'}</td></tr>
+            <tr><th>Item Link:</th><td>${link ? `<a href="${link}" style="color:#1a73e8;">${link}</a>` : 'Not provided'}</td></tr>
+            <tr><th>Reason for Purchase:</th><td>${reason || 'Not provided'}</td></tr>
             <tr><th>Status:</th><td><em>${isRequest ? 'Pending' : approvalStatus}</em></td></tr>
-            ${imageTag || ''}
+            ${imageTag ? `<tr><td colspan="2" style="text-align:center;">${imageTag}</td></tr>` : ''}
           </table>
         </div>
         <div class="email-footer">${footer}</div>
@@ -141,34 +174,23 @@ function generateEmailHTML(data, isRequest, shortUrl = '') {
   `;
 }
 
-function authorizationTest() {
-  try {
-    GmailApp.getInboxUnreadCount();
-    DriveApp.getFiles();
-    Drive.Files.list({pageSize: 1});
-  } catch (e) {
-    Logger.log('Authorization error: ' + e.toString());
-    throw e;
-  }
-}
-
-function sendSmsNotification(requestedItem, shortUrl, phoneEmail) {
-  const smsMessage = `[[FORM]] Purchase Request - ${requestedItem.substring(0, 157 - shortUrl.length)}... ${shortUrl}`;
+function sendSmsNotification(requestedItem, sheetUrl, phoneEmail) {
+  let smsMessage = `[[FORM]] Purchase Request - ${requestedItem} ${sheetUrl}`;
   GmailApp.sendEmail(phoneEmail, "", smsMessage);
 }
 
-function prepareEmailOptions(data, properties, isNewRequest, shortUrl = '') {
-  const imageTag = generateImageTag(data.photoUpload);
-  const htmlMessage = generateEmailHTML({ ...data, imageTag }, isNewRequest, shortUrl);
+function prepareEmailOptions(data, properties, isNewRequest, sheetUrl) {
+  const imageTag = generateImageTag(data.photo);
+  const htmlMessage = generateEmailHTML(data, isNewRequest, sheetUrl, imageTag);
   const emailOptions = {
-    to: isNewRequest ? properties.SUPERVISOR_EMAIL : data.employeeEmail,
-    subject: `[[Form]] ${data.requestedItem} - ${isNewRequest ? 'New Request' : data.approvalStatus}`,
+    to: isNewRequest ? properties.SUPERVISOR_EMAIL : data.email,
+    subject: `[[Form]] ${data.item || 'Purchase Request'} - ${isNewRequest ? 'New Request' : data.approvalStatus}`,
     htmlBody: htmlMessage,
     attachments: []
   };
   const ccList = [];
   if (isNewRequest ? properties.CC_EMPLOYEE === 'true' : properties.CC_SUPERVISOR === 'true') {
-    ccList.push(isNewRequest ? data.employeeEmail : properties.SUPERVISOR_EMAIL);
+    ccList.push(isNewRequest ? data.email : properties.SUPERVISOR_EMAIL);
   }
   if (properties.ENABLE_THIRD_PARTY_EMAIL === 'true' && properties.THIRD_PARTY_EMAIL) {
     ccList.push(properties.THIRD_PARTY_EMAIL);
@@ -180,46 +202,95 @@ function prepareEmailOptions(data, properties, isNewRequest, shortUrl = '') {
 }
 
 function getRowData(sheet, row) {
-  return ['EMAIL', 'ITEM', 'COST', 'LINK', 'PHOTO', 'REASON'].reduce((acc, key) => {
-    acc[key.toLowerCase()] = sheet.getRange(row, COLUMNS[key]).getValue();
-    return acc;
-  }, {});
+  return {
+    email: sheet.getRange(row, COLUMNS.EMAIL).getValue(),
+    item: sheet.getRange(row, COLUMNS.ITEM).getValue(),
+    cost: sheet.getRange(row, COLUMNS.COST).getValue(),
+    link: sheet.getRange(row, COLUMNS.LINK).getValue(),
+    photo: sheet.getRange(row, COLUMNS.PHOTO).getValue(),
+    reason: sheet.getRange(row, COLUMNS.REASON).getValue()
+  };
 }
 
 const isValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-function shortenUrl(longUrl) {
-  try {
-    const response = UrlFetchApp.fetch('https://ulvis.net/API/write/get?url=' + encodeURIComponent(longUrl) + '&type=json');
-    const json = JSON.parse(response.getContentText());
-    return (json.success === 1 && json.data && json.data.url) ? json.data.url : longUrl;
-  } catch (error) {
-    Logger.log('Error shortening URL: ' + error.message);
-    return longUrl;
-  }
-}
-
 function generateImageTag(photoUpload) {
   if (!photoUpload) return '';
   try {
-    const fileId = photoUpload.match(/[-\w]{25,}/)[0];
-    if (!fileId) throw new Error('Invalid file ID');
-    DriveApp.getFileById(fileId).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    const fileMetadata = Drive.Files.get(fileId, { fields: 'thumbnailLink, webContentLink' });
-    const imageUrl = fileMetadata.thumbnailLink ? fileMetadata.thumbnailLink.replace(/=s220$/, '=s0') : fileMetadata.webContentLink;
-    if (!imageUrl) throw new Error('No valid image URL found.');
-    return `<tr><td colspan="2" style="text-align:center;"><img src="${imageUrl}" alt="Uploaded image" style="max-width:100%;height:auto;border:1px solid #ddd;border-radius:4px;"></td></tr>`;
+    const fileIdMatch = photoUpload.match(/[-\w]{25,}(?!.*[-\w]{25,})/);
+    if (!fileIdMatch) {
+      throw new Error('Invalid file ID format');
+    }
+    const fileId = fileIdMatch[0];
+    const file = DriveApp.getFileById(fileId);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    const fileMetadata = Drive.Files.get(fileId, { fields: 'thumbnailLink,webContentLink,mimeType' });
+    let imageUrl;
+    if (fileMetadata.thumbnailLink) {
+      // Use the largest thumbnail size available
+      imageUrl = fileMetadata.thumbnailLink.replace(/=s\d+/, '=s1000');
+    } else if (fileMetadata.webContentLink) {
+      imageUrl = fileMetadata.webContentLink;
+    } else {
+      throw new Error('No valid image URL found');
+    }
+    const mimeType = fileMetadata.mimeType;
+    if (mimeType.startsWith('image/')) {
+      return `<img src="${imageUrl}" alt="Uploaded image" style="max-width:100%;height:auto;border:1px solid #ddd;border-radius:4px;">`;
+    } else if (mimeType === 'application/pdf') {
+      return `<a href="${imageUrl}" target="_blank" style="display:inline-block;padding:10px;background-color:#f0f0f0;border-radius:4px;text-decoration:none;color:#333;">View PDF Document</a>`;
+    } else {
+      return `<a href="${imageUrl}" target="_blank" style="display:inline-block;padding:10px;background-color:#f0f0f0;border-radius:4px;text-decoration:none;color:#333;">View Uploaded File</a>`;
+    }
   } catch (error) {
     Logger.log('Error generating image tag: ' + error.message);
-    return `<tr><td colspan="2" style="text-align:center;"><p>Error loading image. Please check the original file in Google Drive.</p></td></tr>`;
+    return `<p>Unable to display the uploaded file. <a href="${photoUpload}" target="_blank" style="color:#1a73e8;">Click here to view the original file</a>.</p>`;
+  }
+}
+
+
+function saveSetupData(formData) {
+  const currentData = getSetupData();
+  const updatedData = {...currentData, ...formData};
+  
+  const errors = validateSetupData(updatedData);
+  if (errors.length > 0) throw new Error(errors.join('\n'));
+
+  const properties = PropertiesService.getScriptProperties();
+  properties.setProperties({
+    'SUPERVISOR_EMAIL': updatedData.SUPERVISOR_EMAIL,
+    'ENABLE_SMS': updatedData.ENABLE_SMS.toString(),
+    'SUPERVISOR_PHONE_EMAIL': updatedData.ENABLE_SMS ? updatedData.SUPERVISOR_PHONE_EMAIL : '',
+    'CC_SUPERVISOR': updatedData.CC_SUPERVISOR.toString(),
+    'CC_EMPLOYEE': updatedData.CC_EMPLOYEE.toString(),
+    'ENABLE_THIRD_PARTY_EMAIL': updatedData.ENABLE_THIRD_PARTY_EMAIL.toString(),
+    'THIRD_PARTY_EMAIL': updatedData.ENABLE_THIRD_PARTY_EMAIL ? updatedData.THIRD_PARTY_EMAIL : '',
+  });
+
+  if (properties.getProperty('SETUP_COMPLETED') !== 'true') {
+    addApprovalColumn();
+    createTriggers();
+    properties.setProperty('SETUP_COMPLETED', 'true');
   }
 }
 
 function getSetupData() {
-  try {
-    return PropertiesService.getScriptProperties().getProperties();
-  } catch (e) {
-    Logger.log('Authorization required or properties could not be accessed.');
-    return {};
-  }
+  const properties = PropertiesService.getScriptProperties();
+  return {
+    SUPERVISOR_EMAIL: properties.getProperty('SUPERVISOR_EMAIL') || '',
+    ENABLE_SMS: properties.getProperty('ENABLE_SMS') === 'true',
+    SUPERVISOR_PHONE_EMAIL: properties.getProperty('SUPERVISOR_PHONE_EMAIL') || '',
+    CC_SUPERVISOR: properties.getProperty('CC_SUPERVISOR') === 'true',
+    CC_EMPLOYEE: properties.getProperty('CC_EMPLOYEE') === 'true',
+    ENABLE_THIRD_PARTY_EMAIL: properties.getProperty('ENABLE_THIRD_PARTY_EMAIL') === 'true',
+    THIRD_PARTY_EMAIL: properties.getProperty('THIRD_PARTY_EMAIL') || ''
+  };
+}
+
+function validateSetupData(data) {
+  const errors = [];
+  if (data.SUPERVISOR_EMAIL && !isValidEmail(data.SUPERVISOR_EMAIL)) errors.push('Invalid Supervisor Email.');
+  if (data.ENABLE_SMS && data.SUPERVISOR_PHONE_EMAIL && !isValidEmail(data.SUPERVISOR_PHONE_EMAIL)) errors.push('Invalid Supervisor Phone Email.');
+  if (data.ENABLE_THIRD_PARTY_EMAIL && data.THIRD_PARTY_EMAIL && !isValidEmail(data.THIRD_PARTY_EMAIL)) errors.push('Invalid Third-Party Email.');
+  return errors;
 }
