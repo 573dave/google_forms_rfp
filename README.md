@@ -54,6 +54,65 @@ This project provides a Google Forms-based system for employees to request purch
 1. Click on `[[Menu]]` and select **Authorize** to grant the necessary permissions for the script to function.
 2. Follow the prompts to review and grant the required permissions.
 
+## System Flow Chart
+
+Below is an ASCII flow chart representing the main processes of the Purchase Request System:
+
+```
+     +--------------+ +----------------+ +------------+
+     |    Setup     | | Form Response  | |  OnEdit    |
+     +--------------+ +----------------+ +------------+
+            |                |                |
+            v                v                v
+ +--------------------+ +--------------+ +------------------+
+ | Load SetupForm     | | Get Form Data| | Check Edited Cell|
+ +--------------------+ +--------------+ +------------------+
+            |                |                |
+            v                v                v
+ +--------------------+ +--------------+ +------------------+
+ | Display Sidebar    | | Set 'Pending'| | Is Approval      |
+ +--------------------+ +--------------+ | Status?          |
+            |                |           +------------------+
+            v                |                |
+ +--------------------+      |           No   |   Yes
+ | User Inputs        |      |        +-------+-------+
+ | Settings           |      |        |               |
+ +--------------------+      |        v               v
+            |                |    (End)     +------------------+
+            v                |               | Get Updated     |
+ +--------------------+      |               | Status          |
+ | Save Setup Data    |      |               +------------------+
+ +--------------------+      |                       |
+            |                |                       v
+            v                v               +------------------+
+ +--------------------+ +--------------+     | Prepare Email    |
+ | Add Approval       | | Prepare Email|     | Content          |
+ | Column             | | Content      |     +------------------+
+ +--------------------+ +--------------+             |
+            |                |                       v
+            v                v               +------------------+
+ +--------------------+ +--------------+     | Send Notification|
+ | Create Triggers    | | Send to      |     | to Employee      |
+ +--------------------+ | Supervisor   |     +------------------+
+            |           +--------------+             |
+            |                |                       v
+            |                v               +------------------+
+            |        +--------------+        | CC Options?      |
+            |        | SMS Enabled? |        +------------------+
+            |        +--------------+         No |          | Yes
+            |         No |       | Yes          |          |
+            |            |       |              |          v
+            |            |       v              |  +------------------+
+            |            |   +----------+       |  | Send CC Emails   |
+            |            |   | Send SMS |       |  +------------------+
+            |            |   +----------+       |          |
+            |            |       |              |          |
+            v            v       v              v          v
+                       +----------+
+                       |   End    |
+                       +----------+
+```
+
 ## Script Overview
 
 ### `onOpen()`
