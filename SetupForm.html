@@ -1,189 +1,450 @@
-<!-- SetupForm.html -->
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <style>
+      html, body {
+        /* Set height to 100% to fill the sidebar */
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden; /* Prevent scrollbars */
+      }
+      #content {
+        /* Use flexbox to manage content height */
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .content-inner {
+        flex: 1;
+        overflow-y: auto; /* Enable scrolling within this div if needed */
+        padding: 10px;
+      }
       body {
-        font-family: 'Roboto', sans-serif;
-        background-color: #333333;
+        font-family: 'Ubuntu', sans-serif;
+        background-color: #333;
         color: #f0f0f0;
-        padding: 20px;
-        max-width: 400px;
+        max-width: 350px;
       }
       .input-group {
-        margin-bottom: 15px;
+        margin-bottom: 10px;
       }
       label {
         display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
+        margin-bottom: 3px;
+        font-size: 0.9em;
       }
-      input[type="text"], input[type="email"] {
+      input[type="text"],
+      input[type="email"] {
         width: 100%;
-        padding: 8px;
+        padding: 6px;
         box-sizing: border-box;
-        background-color: #444444;
+        background-color: #444;
         color: #f0f0f0;
         border: none;
-        border-radius: 5px;
+        border-radius: 3px;
+        font-size: 0.9em;
       }
       input[type="checkbox"] {
-        transform: scale(1.2);
+        transform: scale(1.1);
       }
       button {
         background-color: #1a73e8;
         color: white;
-        padding: 10px;
+        padding: 8px;
         border: none;
-        border-radius: 5px;
+        border-radius: 3px;
         cursor: pointer;
-        font-weight: bold;
+        font-size: 0.9em;
+        width: 100%;
       }
       button:hover {
         background-color: #135aba;
       }
       .section {
-        background-color: #444444;
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 20px;
+        background-color: #444;
+        padding: 10px;
+        border-radius: 3px;
+        margin-bottom: 15px;
       }
       .section-header {
         cursor: pointer;
-        font-weight: bold;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
+        font-size: 1em;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        user-select: none;
+        padding: 5px; /* Set consistent padding */
+        transition: background-color 0.2s; /* Smooth transition */
+      }
+
+      .section-header:hover {
+        background-color: #555;
       }
       .section-content {
         display: none;
-        margin-top: 10px;
+        margin-top: 5px;
       }
       .hidden {
         display: none;
       }
+      .arrow {
+        transition: transform 0.2s;
+      }
+      [aria-expanded="true"] .arrow {
+        transform: rotate(90deg);
+      }
+      .required {
+        color: red;
+      }
+      #loadingScreen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #f0f0f0;
+      }
+      #formContent {
+        display: none;
+      }
+      /* Loading Spinner */
+      .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid #fff;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+        margin: 10px auto;
+        display: none;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
     </style>
   </head>
   <body>
-    <h2>Setup Form</h2>
-    <p>Please provide the necessary information to set up the purchase request notification system. You can enable or disable different features as needed.</p>
+    <div id="content">
+      <div id="loadingScreen">
+        <div class="spinner" id="spinner"></div>
+        <p>Checking for saved settings...</p>
+      </div>
+      <div class="content-inner" id="formContent">
+        <h3>Setup</h3>
+        <p>
+          Provide the following to setup the notification system. You can run Setup
+          again to make changes.
+        </p>
 
-    <div class="section">
-      <div class="section-header" onclick="toggleSection(this)">Supervisor Contact Information</div>
-      <div class="section-content">
-        <p>The supervisor's email will be used to notify them of any new purchase requests that require their approval.</p>
-        <div class="input-group">
-          <label for="supervisorEmail">Supervisor Email (required)</label>
-          <input type="email" id="supervisorEmail" placeholder="e.g., supervisor@company.com" required>
+        <!-- Supervisor Email Section -->
+        <div class="section">
+          <div class="input-group">
+            <label for="supervisorEmail"
+              >Supervisor Email <span class="required">*</span></label
+            >
+            <input
+              type="email"
+              id="supervisorEmail"
+              placeholder="e.g., supervisor@company.com"
+              required
+              autocomplete="off"
+            />
+          </div>
         </div>
-        <div class="input-group">
-          <label for="supervisorPhoneEmail">Supervisor Phone Email-to-Text Gateway (optional)</label>
-          <input type="text" id="supervisorPhoneEmail" placeholder="e.g., supervisorsnumber@txt.att.net">
-          <p>This is used to send SMS notifications to the supervisor when a new purchase request is submitted. Providing this is optional.</p>
+
+        <!-- SMS Notifications Section -->
+        <div class="section">
+          <div
+            class="section-header"
+            onclick="toggleSection(this)"
+            aria-expanded="false"
+            aria-controls="smsNotifications"
+          >
+            SMS Notifications <span class="arrow">▶</span>
+          </div>
+          <div id="smsNotifications" class="section-content">
+            <div class="input-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="enableSMS"
+                  onchange="toggleVisibility('enableSMS', 'supervisorPhoneEmailGroup')"
+                />
+                Send a text notification to the supervisor via an email-to-sms
+                gateway (e.g., txt.att.net)?
+              </label>
+            </div>
+            <div class="input-group hidden" id="supervisorPhoneEmailGroup">
+              <label for="supervisorPhoneEmail">Supervisor Phone Email</label>
+              <input
+                type="email"
+                id="supervisorPhoneEmail"
+                placeholder="e.g., 1234567890@mms.att.net"
+                autocomplete="off"
+              />
+            </div>
+          </div>
         </div>
+
+        <!-- Additional Notifications Section -->
+        <div class="section">
+          <div
+            class="section-header"
+            onclick="toggleSection(this)"
+            aria-expanded="false"
+            aria-controls="additionalNotifications"
+          >
+            Additional Notifications <span class="arrow">▶</span>
+          </div>
+          <div id="additionalNotifications" class="section-content">
+            <div class="input-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="ccSupervisor"
+                  onchange="toggleDescription('ccSupervisor', 'ccSupervisorDescription')"
+                />
+                CC Supervisor on approval/denial emails?
+              </label>
+              <p id="ccSupervisorDescription" class="hidden">
+                Supervisor will receive a copy approval/denial.
+              </p>
+            </div>
+            <div class="input-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="ccEmployee"
+                  onchange="toggleDescription('ccEmployee', 'ccEmployeeDescription')"
+                />
+                CC Employee on request emails?
+              </label>
+              <p id="ccEmployeeDescription" class="hidden">
+                Employee will receive a copy of original request.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Third-Party Notifications Section -->
+        <div class="section">
+          <div
+            class="section-header"
+            onclick="toggleSection(this)"
+            aria-expanded="false"
+            aria-controls="thirdPartyNotifications"
+          >
+            Third-Party Notifications <span class="arrow">▶</span>
+          </div>
+          <div id="thirdPartyNotifications" class="section-content">
+            <div class="input-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="enableThirdPartyEmail"
+                  onchange="toggleVisibility('enableThirdPartyEmail', 'thirdPartyEmailGroup')"
+                />
+                Send notifications to an additional third-party (e.g.,
+                manager/secretary)?
+              </label>
+            </div>
+            <div class="input-group hidden" id="thirdPartyEmailGroup">
+              <label for="thirdPartyEmail">Third-Party Email</label>
+              <input
+                type="email"
+                id="thirdPartyEmail"
+                placeholder="e.g., manager@company.com"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+        </div>
+
+        <button onclick="submitForm()">Submit</button>
+        <div class="spinner" id="spinner"></div>
       </div>
     </div>
-
-    <div class="section">
-      <div class="section-header" onclick="toggleSection(this)">CC Email Preferences</div>
-      <div class="section-content">
-        <p>Configure whether the supervisor and/or employee should be copied on emails related to purchase requests and approvals.</p>
-        <div class="input-group">
-          <label>
-            <input type="checkbox" id="ccSupervisor" onchange="toggleInput('ccSupervisor', 'ccSupervisorDescription')"> CC Supervisor on Emails?
-          </label>
-          <p id="ccSupervisorDescription" class="hidden">If enabled, the supervisor will be copied on all emails, including those sent to employees regarding the status of their requests.</p>
-        </div>
-        <div class="input-group">
-          <label>
-            <input type="checkbox" id="ccEmployee" onchange="toggleInput('ccEmployee', 'ccEmployeeDescription')"> CC Employee on Emails?
-          </label>
-          <p id="ccEmployeeDescription" class="hidden">If enabled, the employee who submitted the request will be copied on all emails, including notifications sent to the supervisor for approval.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-header" onclick="toggleSection(this)">Third-Party Notifications</div>
-      <div class="section-content">
-        <p>Enable notifications to be sent to an additional third party, such as a manager or secretary, to keep them informed about purchase requests.</p>
-        <div class="input-group">
-          <label>
-            <input type="checkbox" id="enableThirdPartyEmail" onchange="toggleThirdPartyInput()"> Enable Third-Party Email?
-          </label>
-          <p>If enabled, an additional person (e.g., manager or secretary) will receive all notification emails.</p>
-        </div>
-        <div class="input-group hidden" id="thirdPartyEmailGroup">
-          <label for="thirdPartyEmail">Third-Party Email (e.g., Manager/Secretary)</label>
-          <input type="email" id="thirdPartyEmail" placeholder="e.g., manager@company.com" required>
-        </div>
-      </div>
-    </div>
-
-    <button onclick="submitForm()">Submit</button>
 
     <script>
-      function toggleSection(element) {
-        const content = element.nextElementSibling;
-        if (content.style.display === "block") {
-          content.style.display = "none";
-        } else {
-          content.style.display = "block";
-        }
-      }
+      // Preloaded data from server
+      const data = <?!= JSON.stringify(data) ?>;
 
-      function toggleInput(checkboxId, elementId) {
+      // Populate fields immediately
+      document.addEventListener('DOMContentLoaded', () => {
+        populateFields(data);
+      });
+
+      /**
+       * Populates the form fields with existing data.
+       * @param {Object} data - The existing setup data.
+       */
+      const populateFields = (data) => {
+        // Hide loading screen if any
+        const loadingScreen = document.getElementById('loadingScreen');
+        if (loadingScreen) {
+          loadingScreen.style.display = 'none';
+        }
+        // Show form content
+        document.getElementById('formContent').style.display = 'block';
+
+        if (data) {
+          document.getElementById('supervisorEmail').value =
+            data.supervisorEmail || '';
+          document.getElementById('enableSMS').checked =
+            data.enableSMS === 'true';
+
+          if (data.enableSMS === 'true') {
+            toggleVisibility('enableSMS', 'supervisorPhoneEmailGroup');
+            document.getElementById('supervisorPhoneEmail').value =
+              data.supervisorPhoneEmail || '';
+          }
+
+          document.getElementById('ccSupervisor').checked =
+            data.ccSupervisor === 'true';
+          document.getElementById('ccEmployee').checked =
+            data.ccEmployee === 'true';
+
+          if (data.ccSupervisor === 'true') {
+            toggleDescription('ccSupervisor', 'ccSupervisorDescription');
+          }
+          if (data.ccEmployee === 'true') {
+            toggleDescription('ccEmployee', 'ccEmployeeDescription');
+          }
+
+          document.getElementById('enableThirdPartyEmail').checked =
+            data.enableThirdPartyEmail === 'true';
+
+          if (data.enableThirdPartyEmail === 'true') {
+            toggleVisibility('enableThirdPartyEmail', 'thirdPartyEmailGroup');
+            document.getElementById('thirdPartyEmail').value =
+              data.thirdPartyEmail || '';
+          }
+        }
+      };
+
+      /**
+       * Toggles the visibility of a section's content.
+       * @param {HTMLElement} element - The header element clicked.
+       */
+      const toggleSection = (element) => {
+        const content = element.nextElementSibling;
+        const isExpanded =
+          element.getAttribute('aria-expanded') === 'true' ? true : false;
+        element.setAttribute('aria-expanded', !isExpanded);
+        content.style.display = isExpanded ? 'none' : 'block';
+      };
+
+      /**
+       * Toggles the visibility of an element based on a checkbox.
+       * @param {string} checkboxId - The ID of the checkbox.
+       * @param {string} elementId - The ID of the element to show/hide.
+       */
+      const toggleVisibility = (checkboxId, elementId) => {
+        const element = document.getElementById(elementId);
+        element.style.display = document.getElementById(checkboxId).checked
+          ? 'block'
+          : 'none';
+      };
+
+      /**
+       * Toggles the description paragraph visibility based on a checkbox.
+       * @param {string} checkboxId - The ID of the checkbox.
+       * @param {string} elementId - The ID of the description element.
+       */
+      const toggleDescription = (checkboxId, elementId) => {
         const element = document.getElementById(elementId);
         if (document.getElementById(checkboxId).checked) {
           element.classList.remove('hidden');
         } else {
           element.classList.add('hidden');
         }
-      }
+      };
 
-      function toggleThirdPartyInput() {
-        const thirdPartyEmailGroup = document.getElementById('thirdPartyEmailGroup');
-        thirdPartyEmailGroup.style.display = document.getElementById('enableThirdPartyEmail').checked ? 'block' : 'none';
-      }
+      /**
+       * Validates and submits the form data to the server.
+       */
+      const submitForm = () => {
+        const submitButton = document.querySelector('button');
+        const spinner = document.getElementById('spinner');
 
-      function submitForm() {
-        const supervisorEmail = document.getElementById('supervisorEmail').value;
-        const supervisorPhoneEmail = document.getElementById('supervisorPhoneEmail').value;
+        // Disable the submit button and show loading spinner
+        submitButton.disabled = true;
+        spinner.style.display = 'block';
+
+        // Retrieve form values
+        const supervisorEmail = document.getElementById('supervisorEmail')
+          .value;
+        const enableSMS = document.getElementById('enableSMS').checked;
+        const supervisorPhoneEmail = enableSMS
+          ? document.getElementById('supervisorPhoneEmail').value
+          : '';
         const ccSupervisor = document.getElementById('ccSupervisor').checked;
         const ccEmployee = document.getElementById('ccEmployee').checked;
-        const enableThirdPartyEmail = document.getElementById('enableThirdPartyEmail').checked;
-        const thirdPartyEmail = enableThirdPartyEmail ? document.getElementById('thirdPartyEmail').value : '';
+        const enableThirdPartyEmail = document.getElementById(
+          'enableThirdPartyEmail'
+        ).checked;
+        const thirdPartyEmail = enableThirdPartyEmail
+          ? document.getElementById('thirdPartyEmail').value
+          : '';
 
-        // Email validation
-        if (!validateEmail(supervisorEmail)) {
+        // Validate required email fields (HTML5 validation will handle format)
+        if (!supervisorEmail) {
           alert('Please enter a valid Supervisor Email.');
+          submitButton.disabled = false;
+          spinner.style.display = 'none';
           return;
         }
 
-        if (enableThirdPartyEmail && !validateEmail(thirdPartyEmail)) {
+        if (enableSMS && !supervisorPhoneEmail) {
+          alert('Please enter a valid Supervisor Phone Email.');
+          submitButton.disabled = false;
+          spinner.style.display = 'none';
+          return;
+        }
+
+        if (
+          enableThirdPartyEmail &&
+          !document.getElementById('thirdPartyEmail').checkValidity()
+        ) {
           alert('Please enter a valid Third-Party Email.');
+          submitButton.disabled = false;
+          spinner.style.display = 'none';
           return;
         }
 
-        // Phone Email validation (simple format check)
-        if (supervisorPhoneEmail && !validatePhoneEmail(supervisorPhoneEmail)) {
-          alert('Please enter a valid Supervisor Phone Email-to-Text Gateway address.');
-          return;
-        }
-
+        // Send data to server-side script
         google.script.run
-          .withSuccessHandler(() => google.script.host.close())
-          .saveSetupData(supervisorEmail, supervisorPhoneEmail, ccSupervisor, ccEmployee, thirdPartyEmail);
-      }
-
-      function validateEmail(email) {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(email);
-      }
-
-      function validatePhoneEmail(phoneEmail) {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(phoneEmail);
-      }
+          .withSuccessHandler(() => {
+            // Hide spinner
+            spinner.style.display = 'none';
+            // Display confirmation message
+            const formContent = document.getElementById('formContent');
+            formContent.innerHTML = `
+              <h3>Setup Complete</h3>
+              <p>Your settings have been saved successfully!</p>
+              <button onclick="google.script.host.close()">Close</button>
+            `;
+          })
+          .withFailureHandler((error) => {
+            alert('An error occurred: ' + error.message);
+            submitButton.disabled = false;
+            spinner.style.display = 'none';
+          })
+          .saveSetupData(
+            supervisorEmail,
+            enableSMS,
+            supervisorPhoneEmail,
+            ccSupervisor,
+            ccEmployee,
+            enableThirdPartyEmail,
+            thirdPartyEmail
+          );
+      };
     </script>
   </body>
 </html>
