@@ -1,13 +1,15 @@
 # Google Forms Purchase Request System
 
-This project provides a Google Forms-based system for employees to request purchase approvals. The system is linked to a Google Sheet, where a script automates notifications to the boss for each new request and allows them to approve or deny requests. Once a request is approved, the employee is automatically notified via email.
+This project provides a Google Forms-based system for employees to request purchase approvals. The system is linked to a Google Sheet, where a script automates notifications to the supervisor for each new request and allows them to approve or deny requests. Once a request is approved, the employee is automatically notified via email.
 
 ## Features
 
 - **Google Form Integration**: Employees can easily request purchases using a Google Form, including an optional photo upload.
-- **Automated Notifications**: Boss receives an email with a summary of the request and a link to the Google Sheet for approval.
-- **Approval Process**: Once the boss approves or denies the request in the sheet, employees are notified automatically.
+- **Automated Notifications**: Supervisor receives an email with a summary of the request and a link to the Google Sheet for approval.
+- **Approval Process**: Once the supervisor approves or denies the request in the sheet, employees are notified automatically.
 - **HTML Email Summaries**: Requests and approvals are sent as HTML emails for easy reading.
+- **Configurable Notification Preferences**: Options to enable CC for supervisors or employees, as well as notifications for third-party stakeholders (e.g., managers or secretaries).
+- **SMS Notification (Optional)**: Supervisors can also receive SMS notifications if their phone email-to-text gateway is provided.
 
 ## Setup Instructions
 
@@ -20,7 +22,6 @@ This project provides a Google Forms-based system for employees to request purch
    - **Link to Item** (Short answer for a URL)
    - **Optional Photo Upload** (File upload field)
    - **Reason for Purchase** (Paragraph for detailed explanation)
-   - **Approval Status** (Multiple choice: "Pending", "Approved", "Denied")
 
 ### 2. Link to Google Sheets
 1. Click on the **Responses** tab in the form and create a linked Google Sheet.
@@ -35,19 +36,31 @@ This project provides a Google Forms-based system for employees to request purch
 2. Set up a trigger for `onFormSubmit` to fire **On form submit**.
 3. Set up a time-driven trigger for `sendApprovalNotification` to run every 15 minutes or hour.
 
-### 5. Test the System
+### 5. Use the Setup Form
+1. In the linked Google Sheet, use the **Setup Form** sidebar to configure email settings for notifications.
+2. Go to **Extensions > Apps Script > Run setup()**. This will open a sidebar in the Google Sheet.
+3. Fill in the required supervisor email address, configure CC preferences, enable SMS notifications if needed, and optionally add a third-party email for additional notification.
+
+### 6. Test the System
 1. Submit a test request via the Google Form.
-2. Verify that the boss receives a notification with a summary and link to the sheet.
+2. Verify that the supervisor receives a notification with a summary and link to the sheet.
 3. Approve or deny the request in the **Approval Status** column of the sheet and confirm that the employee is notified via email.
 
 ## Script Overview
 
+### `setup()`
+Runs the setup form in the sidebar, allowing configuration of email settings for the supervisor, SMS notifications, CC preferences, and optional third-party notifications.
+
 ### `onFormSubmit(e)`
-Triggered when a form submission is received. Sends a notification to the boss with the details of the request.
+Triggered when a form submission is received. Sends a notification to the supervisor with the details of the request.
 
 ### `sendApprovalNotification()`
 Checks the approval status of the most recent request and notifies the employee if the request has been approved.
 
+### `saveSetupData()`
+Handles storing configuration options set by the setup form, including supervisor email, SMS notification setup, CC preferences, and third-party email settings.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
