@@ -23,21 +23,20 @@ This project provides a Google Forms-based system for employees to request purch
    - **Reason for Purchase** (Paragraph for detailed explanation)
 
 **Note:** The current code will only work if all of these fields are present and in the specified order, with no additional fields. If you need to add or modify fields, you will need to adjust the code accordingly.
-   - **Item to Purchase** (Short answer)
-   - **Estimated Cost** (Short answer with number validation)
-   - **Link to Item** (Short answer for a URL)
-   - **Optional Photo Upload** (File upload field)
-   - **Reason for Purchase** (Paragraph for detailed explanation)
 
 ### 2. Link to Google Sheets
 1. Click on the **Responses** tab in the form and create a linked Google Sheet.
 
 ### 3. Add the Scripts
 1. In the Google Sheet, go to **Extensions > Apps Script**.
-2. In the Apps Script editor, copy and paste the contents of [Code.gs](https://raw.githubusercontent.com/573dave/google_forms_rfp/refs/heads/main/Code.gs)(Hold Ctrl or Cmd when clicking to open the code in a new tab), replacing the empty "myFunction".
-3. Create another new file for the HTML form:
-   - Click on the **+** icon again and select **HTML**.
-   - Name it `SetupForm` and copy and paste the contents of [SetupForm.html](https://raw.githubusercontent.com/573dave/google_forms_rfp/refs/heads/main/SetupForm.html){:target="_blank"} from this repository into the editor.
+2. In the Apps Script editor, delete all existing lines like `myFunction`.
+   - Right-click and select **Open in New Tab** here: [Code.gs](https://raw.githubusercontent.com/573dave/google_forms_rfp/refs/heads/main/Code.gs) to view and copy the content.
+   - Paste the code into the Apps Script editor (in the default file `Code.gs`).
+3. Create a new file for the HTML form:
+   - In the Apps Script editor, click on the **+** icon in the upper left and select **HTML**.
+   - Name the new file `SetupForm`.
+   - Right-click and select **Open in New Tab** here: [SetupForm.html](https://raw.githubusercontent.com/573dave/google_forms_rfp/refs/heads/main/SetupForm.html) to view and copy the content.
+   - Paste the contents into the newly created `SetupForm` file.
 4. Save both files and close the editor.
 5. Reload the Google Sheet to ensure the script updates are recognized.
 
