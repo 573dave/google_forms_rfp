@@ -1,0 +1,189 @@
+<!-- SetupForm.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #333333;
+        color: #f0f0f0;
+        padding: 20px;
+        max-width: 400px;
+      }
+      .input-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input[type="text"], input[type="email"] {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+        background-color: #444444;
+        color: #f0f0f0;
+        border: none;
+        border-radius: 5px;
+      }
+      input[type="checkbox"] {
+        transform: scale(1.2);
+      }
+      button {
+        background-color: #1a73e8;
+        color: white;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      button:hover {
+        background-color: #135aba;
+      }
+      .section {
+        background-color: #444444;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+      }
+      .section-header {
+        cursor: pointer;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+      .section-content {
+        display: none;
+        margin-top: 10px;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Setup Form</h2>
+    <p>Please provide the necessary information to set up the purchase request notification system. You can enable or disable different features as needed.</p>
+
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">Supervisor Contact Information</div>
+      <div class="section-content">
+        <p>The supervisor's email will be used to notify them of any new purchase requests that require their approval.</p>
+        <div class="input-group">
+          <label for="supervisorEmail">Supervisor Email (required)</label>
+          <input type="email" id="supervisorEmail" placeholder="e.g., supervisor@company.com" required>
+        </div>
+        <div class="input-group">
+          <label for="supervisorPhoneEmail">Supervisor Phone Email-to-Text Gateway (optional)</label>
+          <input type="text" id="supervisorPhoneEmail" placeholder="e.g., supervisorsnumber@txt.att.net">
+          <p>This is used to send SMS notifications to the supervisor when a new purchase request is submitted. Providing this is optional.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">CC Email Preferences</div>
+      <div class="section-content">
+        <p>Configure whether the supervisor and/or employee should be copied on emails related to purchase requests and approvals.</p>
+        <div class="input-group">
+          <label>
+            <input type="checkbox" id="ccSupervisor" onchange="toggleInput('ccSupervisor', 'ccSupervisorDescription')"> CC Supervisor on Emails?
+          </label>
+          <p id="ccSupervisorDescription" class="hidden">If enabled, the supervisor will be copied on all emails, including those sent to employees regarding the status of their requests.</p>
+        </div>
+        <div class="input-group">
+          <label>
+            <input type="checkbox" id="ccEmployee" onchange="toggleInput('ccEmployee', 'ccEmployeeDescription')"> CC Employee on Emails?
+          </label>
+          <p id="ccEmployeeDescription" class="hidden">If enabled, the employee who submitted the request will be copied on all emails, including notifications sent to the supervisor for approval.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">Third-Party Notifications</div>
+      <div class="section-content">
+        <p>Enable notifications to be sent to an additional third party, such as a manager or secretary, to keep them informed about purchase requests.</p>
+        <div class="input-group">
+          <label>
+            <input type="checkbox" id="enableThirdPartyEmail" onchange="toggleThirdPartyInput()"> Enable Third-Party Email?
+          </label>
+          <p>If enabled, an additional person (e.g., manager or secretary) will receive all notification emails.</p>
+        </div>
+        <div class="input-group hidden" id="thirdPartyEmailGroup">
+          <label for="thirdPartyEmail">Third-Party Email (e.g., Manager/Secretary)</label>
+          <input type="email" id="thirdPartyEmail" placeholder="e.g., manager@company.com" required>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="submitForm()">Submit</button>
+
+    <script>
+      function toggleSection(element) {
+        const content = element.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+      }
+
+      function toggleInput(checkboxId, elementId) {
+        const element = document.getElementById(elementId);
+        if (document.getElementById(checkboxId).checked) {
+          element.classList.remove('hidden');
+        } else {
+          element.classList.add('hidden');
+        }
+      }
+
+      function toggleThirdPartyInput() {
+        const thirdPartyEmailGroup = document.getElementById('thirdPartyEmailGroup');
+        thirdPartyEmailGroup.style.display = document.getElementById('enableThirdPartyEmail').checked ? 'block' : 'none';
+      }
+
+      function submitForm() {
+        const supervisorEmail = document.getElementById('supervisorEmail').value;
+        const supervisorPhoneEmail = document.getElementById('supervisorPhoneEmail').value;
+        const ccSupervisor = document.getElementById('ccSupervisor').checked;
+        const ccEmployee = document.getElementById('ccEmployee').checked;
+        const enableThirdPartyEmail = document.getElementById('enableThirdPartyEmail').checked;
+        const thirdPartyEmail = enableThirdPartyEmail ? document.getElementById('thirdPartyEmail').value : '';
+
+        // Email validation
+        if (!validateEmail(supervisorEmail)) {
+          alert('Please enter a valid Supervisor Email.');
+          return;
+        }
+
+        if (enableThirdPartyEmail && !validateEmail(thirdPartyEmail)) {
+          alert('Please enter a valid Third-Party Email.');
+          return;
+        }
+
+        // Phone Email validation (simple format check)
+        if (supervisorPhoneEmail && !validatePhoneEmail(supervisorPhoneEmail)) {
+          alert('Please enter a valid Supervisor Phone Email-to-Text Gateway address.');
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(() => google.script.host.close())
+          .saveSetupData(supervisorEmail, supervisorPhoneEmail, ccSupervisor, ccEmployee, thirdPartyEmail);
+      }
+
+      function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+      }
+
+      function validatePhoneEmail(phoneEmail) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(phoneEmail);
+      }
+    </script>
+  </body>
+</html>
