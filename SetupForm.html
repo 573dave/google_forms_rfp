@@ -2,25 +2,140 @@
 <html>
 <head>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
-  <style>
-    html,body{height:100%;margin:0;padding:0;overflow:hidden;font-family:'Ubuntu',sans-serif;background-color:#333;color:#f0f0f0;}
-    #content{display:flex;flex-direction:column;height:100%;}
-    .content-inner{flex:1;overflow-y:auto;padding:10px;}
-    input[type="text"],input[type="email"]{width:100%;padding:6px;box-sizing:border-box;background-color:#444;color:#f0f0f0;border:none;border-radius:3px;font-size:0.9em;}
-    input[type="checkbox"]{transform:scale(1.1);}
-    button{background-color:#1a73e8;color:white;padding:8px;border:none;border-radius:3px;cursor:pointer;font-size:0.9em;width:100%;}
-    button:hover{background-color:#135aba;}
-    .section{background-color:#444;padding:10px;border-radius:3px;margin-bottom:15px;}
-    .section-header{cursor:pointer;margin-bottom:5px;font-size:1em;display:flex;justify-content:space-between;align-items:center;user-select:none;padding:5px;transition:background-color 0.2s;}
-    .section-header:hover{background-color:#555;}
-    .section-content{display:none;margin-top:5px;}
-    .hidden{display:none;}
-    .arrow{transition:transform 0.2s;}
-    [aria-expanded="true"] .arrow{transform:rotate(90deg);}
-    .required{color:red;}
-    #loadingScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;}
-    .spinner{border:4px solid rgba(255,255,255,0.3);border-top:4px solid #fff;border-radius:50%;width:24px;height:24px;animation:spin 1s linear infinite;margin:10px auto;display:none;}
-    @keyframes spin{to{transform:rotate(360deg);}}
+    <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Ubuntu', sans-serif;
+      background-color: #333;
+      color: #f0f0f0;
+    }
+
+    #content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .content-inner {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    input[type="text"], input[type="email"] {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      background-color: #555;
+      color: #f0f0f0;
+      border: 1px solid #666;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+
+    input[type="text"]:focus, input[type="email"]:focus {
+      outline: none;
+      border-color: #1a73e8;
+    }
+
+    input[type="checkbox"] {
+      transform: scale(1.1);
+      margin-right: 8px;
+    }
+
+    button {
+      background-color: #1a73e8;
+      color: white;
+      padding: 8px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 0.9em;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #135aba;
+    }
+
+    .section {
+      background-color: #444;
+      padding: 10px;
+      border-radius: 3px;
+      margin-bottom: 15px;
+    }
+
+    .section-header {
+      cursor: pointer;
+      margin-bottom: 5px;
+      font-size: 1em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      padding: 5px;
+      transition: background-color 0.2s;
+    }
+
+    .section-header:hover {
+      background-color: #555;
+    }
+
+    .section-content {
+      display: none;
+      margin-top: 5px;
+    }
+
+    .input-group {
+      margin-bottom: 12px;
+    }
+
+    .input-group label {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .arrow {
+      transition: transform 0.2s;
+    }
+
+    [aria-expanded="true"] .arrow {
+      transform: rotate(90deg);
+    }
+
+    .required {
+      color: red;
+    }
+
+    #loadingScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .spinner {
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top: 4px solid #fff;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin: 10px auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -29,130 +144,257 @@
       <div class="spinner" id="spinner"></div>
       <p>Checking for saved settings...</p>
     </div>
-    <div class="content-inner" id="formContent">
+    <div class="content-inner" id="formContent" style="display: none;">
       <h3>Setup</h3>
       <p>Provide the following to setup the notification system. You can run Setup again to make changes.</p>
       <div class="section">
         <div class="input-group">
           <label for="supervisorEmail">Supervisor Email <span class="required">*</span></label>
-          <input type="email" id="supervisorEmail" placeholder="e.g., supervisor@company.com" required autocomplete="off">
+          <input type="email" id="SUPERVISOR_EMAIL" placeholder="e.g., supervisor@company.com" required autocomplete="off">
         </div>
       </div>
       <div class="section">
-        <div class="section-header" onclick="toggleSection(this)" aria-expanded="false" aria-controls="smsNotifications">
+        <div class="section-header" aria-expanded="false" aria-controls="smsNotifications">
           SMS Notifications <span class="arrow">▶</span>
         </div>
         <div id="smsNotifications" class="section-content">
           <div class="input-group">
-            <label><input type="checkbox" id="enableSMS" onchange="toggleVisibility('enableSMS', 'supervisorPhoneEmailGroup')"> Send a text notification to the supervisor via an email-to-sms gateway?</label>
+            <label><input type="checkbox" id="ENABLE_SMS"> Send a text notification to the supervisor via an email-to-sms gateway?</label>
           </div>
           <div class="input-group hidden" id="supervisorPhoneEmailGroup">
-            <label for="supervisorPhoneEmail">Supervisor Phone Email</label>
-            <input type="email" id="supervisorPhoneEmail" placeholder="e.g., 1234567890@mms.att.net" autocomplete="off">
+            <label for="SUPERVISOR_PHONE_EMAIL">Supervisor Phone Email</label>
+            <input type="email" id="SUPERVISOR_PHONE_EMAIL" placeholder="e.g., 1234567890@mms.att.net" autocomplete="off">
           </div>
         </div>
       </div>
       <div class="section">
-        <div class="section-header" onclick="toggleSection(this)" aria-expanded="false" aria-controls="additionalNotifications">
+        <div class="section-header" aria-expanded="false" aria-controls="additionalNotifications">
           Additional Notifications <span class="arrow">▶</span>
         </div>
         <div id="additionalNotifications" class="section-content">
           <div class="input-group">
-            <label><input type="checkbox" id="ccSupervisor" onchange="toggleDescription('ccSupervisor', 'ccSupervisorDescription')"> CC Supervisor on approval/denial emails?</label>
+            <label><input type="checkbox" id="CC_SUPERVISOR"> CC Supervisor on approval/denial emails?</label>
             <p id="ccSupervisorDescription" class="hidden">Supervisor will receive a copy approval/denial.</p>
           </div>
           <div class="input-group">
-            <label><input type="checkbox" id="ccEmployee" onchange="toggleDescription('ccEmployee', 'ccEmployeeDescription')"> CC Employee on request emails?</label>
+            <label><input type="checkbox" id="CC_EMPLOYEE"> CC Employee on request emails?</label>
             <p id="ccEmployeeDescription" class="hidden">Employee will receive a copy of original request.</p>
           </div>
         </div>
       </div>
       <div class="section">
-        <div class="section-header" onclick="toggleSection(this)" aria-expanded="false" aria-controls="thirdPartyNotifications">
+        <div class="section-header" aria-expanded="false" aria-controls="thirdPartyNotifications">
           Third-Party Notifications <span class="arrow">▶</span>
         </div>
         <div id="thirdPartyNotifications" class="section-content">
           <div class="input-group">
-            <label><input type="checkbox" id="enableThirdPartyEmail" onchange="toggleVisibility('enableThirdPartyEmail', 'thirdPartyEmailGroup')"> Send notifications to an additional third-party?</label>
+            <label><input type="checkbox" id="ENABLE_THIRD_PARTY_EMAIL"> Send notifications to an additional third-party?</label>
           </div>
           <div class="input-group hidden" id="thirdPartyEmailGroup">
-            <label for="thirdPartyEmail">Third-Party Email</label>
-            <input type="email" id="thirdPartyEmail" placeholder="e.g., manager@company.com" autocomplete="off">
+            <label for="THIRD_PARTY_EMAIL">Third-Party Email</label>
+            <input type="email" id="THIRD_PARTY_EMAIL" placeholder="e.g., manager@company.com" autocomplete="off">
           </div>
         </div>
       </div>
       <button onclick="submitForm()">Submit</button>
-      <div class="spinner" id="spinner"></div>
     </div>
-  </div>
-  <script>
-    const data = <?!= JSON.stringify(data) ?>;
-    document.addEventListener('DOMContentLoaded', () => populateFields(data));
-    const populateFields = (data) => {
-      document.getElementById('loadingScreen').style.display = 'none';
-      document.getElementById('formContent').style.display = 'block';
-      if (data) {
-        Object.entries(data).forEach(([key, value]) => {
-          const element = document.getElementById(key);
-          if (element) {
-            if (element.type === 'checkbox') {
-              element.checked = value === 'true';
-              if (element.checked) {
-                toggleVisibility(key, key + 'Group');
-                toggleDescription(key, key + 'Description');
-              }
-            } else {
-              element.value = value || '';
-            }
-          }
-        });
+  <div class="spinner" id="submitSpinner" style="display: none;"></div>
+</div>
+<script>
+const data = <?!= JSON.stringify(data) ?>;
+
+document.addEventListener('DOMContentLoaded', () => {
+  populateFields(data);
+  document.getElementById('loadingScreen').style.display = 'none';
+  document.getElementById('formContent').style.display = 'block';
+  
+  // Event delegation for checkbox changes and section toggles
+  document.addEventListener('change', handleCheckboxChange);
+  document.addEventListener('click', handleSectionToggle);
+
+  // Initial setup of visibility
+  document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+    handleCheckboxVisibility(checkbox.id);
+  });
+});
+
+function populateFields(data) {
+  if (data) {
+    Object.entries(data).forEach(([key, value]) => {
+      const element = document.getElementById(key);
+      if (element) {
+        if (element.type === 'checkbox') {
+          element.checked = value === true;
+          handleCheckboxVisibility(key);
+        } else {
+          element.value = value || '';
+        }
       }
-    };
-    const toggleSection = (element) => {
-      const content = element.nextElementSibling;
-      const isExpanded = element.getAttribute('aria-expanded') === 'true';
-      element.setAttribute('aria-expanded', !isExpanded);
-      content.style.display = isExpanded ? 'none' : 'block';
-    };
-    const toggleVisibility = (checkboxId, elementId) => {
-      document.getElementById(elementId).style.display = document.getElementById(checkboxId).checked ? 'block' : 'none';
-    };
-    const toggleDescription = (checkboxId, elementId) => {
-      document.getElementById(elementId).classList.toggle('hidden', !document.getElementById(checkboxId).checked);
-    };
-    const submitForm = () => {
-      const submitButton = document.querySelector('button');
-      const spinner = document.getElementById('spinner');
-      submitButton.disabled = true;
-      spinner.style.display = 'block';
-      const formData = ['supervisorEmail', 'enableSMS', 'supervisorPhoneEmail', 'ccSupervisor', 'ccEmployee', 'enableThirdPartyEmail', 'thirdPartyEmail']
-        .reduce((acc, id) => {
-          const element = document.getElementById(id);
-          acc[id] = element.type === 'checkbox' ? element.checked : element.value;
-          return acc;
-        }, {});
-      if (!formData.supervisorEmail || (formData.enableSMS && !formData.supervisorPhoneEmail) || (formData.enableThirdPartyEmail && !formData.thirdPartyEmail)) {
-        alert('Please fill in all required fields correctly.');
-        submitButton.disabled = false;
-        spinner.style.display = 'none';
-        return;
-      }
-      google.script.run
-        .withSuccessHandler(() => {
-          spinner.style.display = 'none';
-          document.getElementById('formContent').innerHTML = `
-            <h3>Setup Complete</h3>
-            <p>Your settings have been saved successfully!</p>
-            <button onclick="google.script.host.close()">Close</button>
-          `;
-        })
-        .withFailureHandler((error) => {
-          alert('An error occurred: ' + error.message);
-          submitButton.disabled = false;
-          spinner.style.display = 'none';
-        })
-        .saveSetupData(formData.supervisorEmail, formData.enableSMS, formData.supervisorPhoneEmail, formData.ccSupervisor, formData.ccEmployee, formData.enableThirdPartyEmail, formData.thirdPartyEmail);
-    };
-  </script>
+    });
+  }
+}
+
+function handleCheckboxChange(event) {
+  if (event.target.type === 'checkbox') {
+    handleCheckboxVisibility(event.target.id);
+  }
+}
+
+function handleSectionToggle(event) {
+  if (event.target.closest('.section-header')) {
+    toggleSection(event.target.closest('.section-header'));
+  }
+}
+
+function handleCheckboxVisibility(checkboxId) {
+  const checkbox = document.getElementById(checkboxId);
+  if (checkbox) {
+    const groupId = getGroupId(checkboxId);
+    const descriptionId = getDescriptionId(checkboxId);
+    toggleVisibility(checkboxId, groupId);
+    toggleDescription(checkboxId, descriptionId);
+  }
+}
+
+function getGroupId(checkboxId) {
+  const groupMap = {
+    'ENABLE_SMS': 'supervisorPhoneEmailGroup',
+    'ENABLE_THIRD_PARTY_EMAIL': 'thirdPartyEmailGroup'
+  };
+  return groupMap[checkboxId] || '';
+}
+
+function getDescriptionId(checkboxId) {
+  const descriptionMap = {
+    'CC_SUPERVISOR': 'ccSupervisorDescription',
+    'CC_EMPLOYEE': 'ccEmployeeDescription'
+  };
+  return descriptionMap[checkboxId] || '';
+}
+
+function toggleSection(header) {
+  const content = header.nextElementSibling;
+  const isExpanded = header.getAttribute('aria-expanded') === 'true';
+  header.setAttribute('aria-expanded', !isExpanded);
+  content.style.display = isExpanded ? 'none' : 'block';
+  const arrow = header.querySelector('.arrow');
+  if (arrow) {
+    arrow.textContent = isExpanded ? '▶' : '▼';
+  }
+}
+
+function toggleVisibility(checkboxId, elementId) {
+  const checkbox = document.getElementById(checkboxId);
+  const element = document.getElementById(elementId);
+  if (checkbox && element) {
+    element.style.display = checkbox.checked ? 'block' : 'none';
+  }
+}
+
+function toggleDescription(checkboxId, elementId) {
+  const checkbox = document.getElementById(checkboxId);
+  const element = document.getElementById(elementId);
+  if (checkbox && element) {
+    element.classList.toggle('hidden', !checkbox.checked);
+  }
+}
+
+function submitForm() {
+  const formData = getFormData();
+  
+  const errors = validateFormData(formData);
+  if (errors.length > 0) {
+    showValidationErrors(errors);
+    return;
+  }
+
+  toggleLoadingState(true);
+
+  google.script.run
+    .withSuccessHandler(handleSubmitSuccess)
+    .withFailureHandler(handleSubmitFailure)
+    .saveSetupData(formData);
+}
+
+function getFormData() {
+  return {
+    SUPERVISOR_EMAIL: document.getElementById('SUPERVISOR_EMAIL').value.trim(),
+    ENABLE_SMS: document.getElementById('ENABLE_SMS').checked,
+    SUPERVISOR_PHONE_EMAIL: document.getElementById('SUPERVISOR_PHONE_EMAIL').value.trim(),
+    CC_SUPERVISOR: document.getElementById('CC_SUPERVISOR').checked,
+    CC_EMPLOYEE: document.getElementById('CC_EMPLOYEE').checked,
+    ENABLE_THIRD_PARTY_EMAIL: document.getElementById('ENABLE_THIRD_PARTY_EMAIL').checked,
+    THIRD_PARTY_EMAIL: document.getElementById('THIRD_PARTY_EMAIL').value.trim()
+  };
+}
+
+function validateFormData(formData) {
+  const errors = [];
+
+  if (!formData.SUPERVISOR_EMAIL) {
+    errors.push('Supervisor Email is required');
+  } else if (!isValidEmail(formData.SUPERVISOR_EMAIL)) {
+    errors.push('Invalid Supervisor Email format');
+  }
+
+  if (formData.ENABLE_SMS && !formData.SUPERVISOR_PHONE_EMAIL) {
+    errors.push('Supervisor Phone Email is required when SMS is enabled');
+  }
+
+  if (formData.ENABLE_THIRD_PARTY_EMAIL && !formData.THIRD_PARTY_EMAIL) {
+    errors.push('Third-Party Email is required when enabled');
+  }
+
+  return errors;
+}
+
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+function showValidationErrors(errors) {
+  alert('Please correct the following errors:\n' + errors.join('\n'));
+}
+
+function toggleLoadingState(isLoading) {
+  const submitButton = document.querySelector('button');
+  const spinner = document.getElementById('submitSpinner');
+  const formContent = document.getElementById('formContent');
+
+  submitButton.disabled = isLoading;
+  formContent.style.display = isLoading ? 'none' : 'block';
+  spinner.style.display = isLoading ? 'block' : 'none';
+}
+
+function handleSubmitSuccess() {
+  const formContent = document.getElementById('formContent');
+  formContent.innerHTML = `
+    <h3>Setup Complete</h3>
+    <p>Your settings have been saved successfully!</p>
+    <button onclick="google.script.host.close()">Close</button>
+  `;
+  toggleLoadingState(false);
+}
+
+function handleSubmitFailure(error) {
+  alert('An error occurred: ' + error.message);
+  toggleLoadingState(false);
+}
+
+google.script.run
+  .withSuccessHandler(function(result) {
+    if (!result.success) {
+      console.error('Authorization failed:', result.error);
+      // Show a message to the user that they need to authorize
+      alert('Authorization is required. Please use the "Authorize" option in the menu.');
+    }
+  })
+  .withFailureHandler(function(error) {
+    console.error('Error:', error);
+    alert('An error occurred. Please try again.');
+  })
+  .onSetupFormLoaded();
+</script>
 </body>
 </html>
