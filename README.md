@@ -15,7 +15,14 @@ This project provides a Google Forms-based system for employees to request purch
 
 ### 1. Create the Google Form
 1. Go to [Google Forms](https://forms.google.com) and create a new form.
-2. Add the following fields: **Note:** The current code will only work if all of these fields are present and in the specified order, with no additional fields. If you need to add or modify fields, you will need to adjust the code accordingly.
+2. Add the following fields:
+   - **Item to Purchase** (Short answer)
+   - **Estimated Cost** (Short answer with number validation)
+   - **Link to Item** (Short answer for a URL)
+   - **Optional Photo Upload** (File upload field, requires sign-in)
+   - **Reason for Purchase** (Paragraph for detailed explanation)
+
+**Note:** The current code will only work if all of these fields are present and in the specified order, with no additional fields. If you need to add or modify fields, you will need to adjust the code accordingly.
    - **Item to Purchase** (Short answer)
    - **Estimated Cost** (Short answer with number validation)
    - **Link to Item** (Short answer for a URL)
@@ -27,9 +34,12 @@ This project provides a Google Forms-based system for employees to request purch
 
 ### 3. Add the Scripts
 1. In the Google Sheet, go to **Extensions > Apps Script**.
-2. Copy and paste the script from this repository (`Code.gs` and `SetupForm.html`) into the Apps Script editor.
-3. Save and close the editor.
-4. Reload the Google Sheet to make sure the script updates are recognized.
+2. In the Apps Script editor, copy and paste the contents of [Code.gs](https://raw.githubusercontent.com/573dave/google_forms_rfp/refs/heads/main/Code.gs) from this repository, replacing the empty "myFunction".
+3. Create another new file for the HTML form:
+   - Click on the **+** icon again and select **HTML**.
+   - Name it `SetupForm` and copy and paste the contents of [SetupForm.html](https://raw.githubusercontent.com/573dave/google_forms_rfp/refs/heads/main/SetupForm.html) from this repository into the editor.
+4. Save both files and close the editor.
+5. Reload the Google Sheet to ensure the script updates are recognized.
 
 ### 4. Run the Setup Script
 1. In the linked Google Sheet, go to the newly added **Setup Menu** in the toolbar.
@@ -58,10 +68,3 @@ Handles storing configuration options set by the setup form, including superviso
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. In summary, you are free to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software, provided you include the original copyright notice. The software is provided "as is", without warranty of any kind, and the creators are not liable for any issues that arise from using the software.
-
-### What the MIT License Means
-The MIT License is a permissive free software license. In simple terms, it means:
-- You are free to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software.
-- You must include the original copyright notice in any copies or substantial portions of the software.
-- The software is provided "as is", without warranty of any kind. The creators are not liable for any issues that arise from using the software.
-
